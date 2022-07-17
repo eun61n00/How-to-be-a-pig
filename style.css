@@ -1,0 +1,80 @@
+@font-face {
+    font-family: 'LeferiPoint-WhiteObliqueA';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/LeferiPoint-WhiteObliqueA.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	/* font-family: 'LeferiPoint-WhiteObliqueA', sans-serif; */
+}
+
+html {
+	font-family: 'LeferiPoint-WhiteObliqueA'
+}
+
+body {
+	height: 100vh;
+	width: 100%;
+	align-items: center;
+}
+
+main {
+	padding-top: 1rem;
+	height: calc(100% - 60px);
+	display: flex;
+	flex-direction: column;
+}
+
+.nav {
+	height: 60px;
+}
+
+.nav-contact {
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.nav-container {
+	padding: 1rem 0;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+  }
+
+.inner {
+	padding: 0 1rem;
+	width: 100%;
+}
+
+#category{
+	padding: 0;
+}
+
+.category-item {
+	width: 24%;
+	height: 3rem;
+	background: none;
+	border: none;
+	font-family: inherit;
+}
+
+.category-item:hover {
+	color: #FF4949;
+	cursor: pointer;
+}
+
+@media all and (min-width: 1024px) {
+	/* 1024픽셀을 넘어가는 순간부터 이 미디어 쿼리를 적용하겠다. */
+	.inner {
+		max-width: 1024px;
+		margin: 0 auto;
+	}
+}
