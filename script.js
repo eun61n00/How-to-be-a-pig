@@ -49,7 +49,8 @@ const dataSet = [
 
 //주소-좌표 변환 객체 생성
 //비동기 처리 결과로 좌표값을 가져와야 함
-var geocoder = new kakao.maps.services.Geocoder();
+
+var geocoder = new kakao.maps.services.Geocoder(); //주소 -> 좌표 변환 객체 생성
 
 function getCoordsByAddress(address) {
 	return new Promise((resolve, reject) => {
@@ -58,32 +59,53 @@ function getCoordsByAddress(address) {
 				var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
 				return resolve(coords);
 			}
-			reject(new Error("getCoordsByAddress Error: not valid address"));
+			else {
+				return reject("getCoordsByAddress Error: not valid address");
+			}
 		})
 	})
-};
+}
 
-// async 함수 사용하는 거랑 뭔 차이??
-// for (var i = 0; i < dataSet.length; i++) {
-// 	getCoordsByAddress(dataSet[i].address)
-// 		.then((coords) => {
-// 			var marker = new kakao.maps.Marker({
-// 				map: map,
-// 				position: coords,
-// 			})
-// 		})
-// 		.catch((error) => console.log(error));
-// }
+function getContent(data) {
+	//인포윈도우 가공하기
+	return `
+	<div class="infowindow">
+		<div class="infowindow-img-container">
+			<img src="" alt="" class="infowindow-img">
+		</div>
+		<div class="infowindow-body">
+			<h5 class="infowindow-title">${data.title}</h5>
+			<p class="infowindow-address">${data.address}</p>
+			<a href="${data.url}" class="infowindow-btn" target="_blank">영상이동</a>
+		</div>
+	</div>
+	`
+}
 
 async function setMap() {
 	for (var i = 0; i < dataSet.length; i++) {
-		let position = await getCoordsByAddress(dataSet[i].address) //await 구문에서는 resolve가 나와야 “내가 할 일이 끝났다”
-		console.log(position);
+		var coords = await getCoordsByAddress(dataSet[i].address);
 
 		var marker = new kakao.maps.Marker({
 			map: map,
-			position: position,
+			position: coords,
 		});
+
+		var infowindow = new kakao.maps.InfoWindow({
+			content: getContent(dataSet[i])
+		})
+
+		kakao.maps.event.addListener(marker, 'mouseover', function() {
+			// 마커에 마우스오버 이벤트가 발생하면 인포윈도우를 마커위에 표시합니다
+			  infowindow.open(map, marker);
+		  });
+
+		  // 마커에 마우스아웃 이벤트를 등록합니다
+		  kakao.maps.event.addListener(marker, 'mouseout', function() {
+			  // 마커에 마우스아웃 이벤트가 발생하면 인포윈도우를 제거합니다
+			  infowindow.close();
+		  });
+
 	}
 }
 
