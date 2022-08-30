@@ -24,6 +24,7 @@ body {
 
 main {
 	padding-top: 1rem;
+	padding-bottom: 1rem;
 	height: calc(100% - 60px);
 	display: flex;
 	flex-direction: column;

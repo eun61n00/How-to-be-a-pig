@@ -13,7 +13,7 @@
 var mapContainer = document.getElementById('map'), // 지도를 표시할 div
     mapOption = {
         center: new kakao.maps.LatLng(37.5512, 126.9882), // 지도의 중심좌표
-        level: 7 // 지도의 확대 레벨
+        level: 8 // 지도의 확대 레벨
     };
 
 var map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
@@ -31,13 +31,13 @@ const dataSet = [
     title: "희락돈까스",
     address: "서울 영등포구 양산로 210",
     url: "https://www.youtube.com/watch?v=1YOJbOUR4vw&t=88s",
-    category: "양식",
+    category: "일식",
   },
   {
     title: "즉석우동짜장",
     address: "서울 영등포구 대방천로 260",
     url: "https://www.youtube.com/watch?v=1YOJbOUR4vw&t=88s",
-    category: "한식",
+    category: "중식",
   },
   {
     title: "아카사카",
@@ -66,47 +66,131 @@ function getCoordsByAddress(address) {
 	})
 }
 
+function getThum(url) {
+	let replaceUrl = url;
+	let videoId = '';
+	let thumUrl = '';
+	replaceUrl = replaceUrl.replace("https://youtu.be/", '');
+	replaceUrl = replaceUrl.replace("https://www.youtube.com/embed/", '');
+	replaceUrl = replaceUrl.replace("https://www.youtube.com/watch?v=", '');
+	videoId = replaceUrl.split('&')[0];
+	return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+};
+
 function getContent(data) {
 	//인포윈도우 가공하기
 	return `
 	<div class="infowindow">
 		<div class="infowindow-img-container">
-			<img src="" alt="" class="infowindow-img">
+			<img src="${getThum(data.url)}" alt="" class="infowindow-img" style="height: 100px;">
 		</div>
 		<div class="infowindow-body">
 			<h5 class="infowindow-title">${data.title}</h5>
-			<p class="infowindow-address">${data.address}</p>
-			<a href="${data.url}" class="infowindow-btn" target="_blank">영상이동</a>
+			<p class="infowindow-address" style="font-size: 10px">${data.address}</p>
+			<a href="${data.url}" class="infowindow-btn" target="_blank" style="font-size:  10px">영상이동</a>
 		</div>
 	</div>
 	`
 }
 
-async function setMap() {
-	for (var i = 0; i < dataSet.length; i++) {
-		var coords = await getCoordsByAddress(dataSet[i].address);
+let infowindowArray = [];
+
+function makeOverListener(map, marker, infowindow, position) {
+	return function() {
+		closeInfowindow();
+		infowindow.open(map, marker);
+		map.panTo(position);
+	}
+}
+
+function makeOutListener(map, marker, infowindow, position) {
+	return function() {
+		infowindow.close();
+	}
+}
+
+function closeInfowindow() {
+	for (let infowindow of infowindowArray) {
+	  infowindow.close();
+	}
+  }
+
+async function setMap(data) {
+	for (var i = 0; i < data.length; i++) {
+		var coords = await getCoordsByAddress(data[i].address);
 
 		var marker = new kakao.maps.Marker({
 			map: map,
 			position: coords,
 		});
+		markerArray.push(marker);
 
 		var infowindow = new kakao.maps.InfoWindow({
-			content: getContent(dataSet[i])
-		})
+			content: getContent(data[i]),
+			disableAutoPan: true,
+			}
+		)
+		infowindowArray.push(infowindow);
 
-		kakao.maps.event.addListener(marker, 'mouseover', function() {
-			// 마커에 마우스오버 이벤트가 발생하면 인포윈도우를 마커위에 표시합니다
-			  infowindow.open(map, marker);
-		  });
+		kakao.maps.event.addListener(
+			marker,
+			'click',
+			makeOverListener(map, marker, infowindow, coords),
+		);
 
-		  // 마커에 마우스아웃 이벤트를 등록합니다
-		  kakao.maps.event.addListener(marker, 'mouseout', function() {
-			  // 마커에 마우스아웃 이벤트가 발생하면 인포윈도우를 제거합니다
-			  infowindow.close();
-		  });
-
+		kakao.maps.event.addListener(
+			map,
+			'click',
+			makeOutListener(map, marker, infowindow, coords),
+		)
 	}
 }
 
-setMap();
+setMap(dataSet); // 처음 들어왔을 때는 전체 데이터셋 보여주기
+
+
+//카테고리 분류
+
+// 1. 카테고리 객체 생성
+const categoryMap = {
+	korean: "한식",
+	chinese: "중식",
+	japanese: "일식",
+	american: "양식",
+	wheat: "분식",
+	dessert: "디저트",
+	coffee: "커피",
+	others: "기타",
+}
+
+// 2. 이벤트 붙이기 (이벤트를 감시)
+const categoryList = document.querySelector('.category-list');
+categoryList.addEventListener("click", categoryHandler)
+
+function categoryHandler(event) {
+	let categoryId = event.target.id;
+	let category = categoryMap[categoryId];
+
+	let categorizedDataSet = [];
+	for (data of dataSet) {
+		if (data.category === category) {
+			categorizedDataSet.push(data);
+		}
+	}
+
+	//기존 마커 삭제
+	closeMarker();
+
+	//기존 인포윈도우 닫기
+	closeInfowindow();
+
+	setMap(categorizedDataSet); // 카테고리 선택 시, 카테고라이즈된 데이터 셋만 표시
+}
+
+let markerArray = [];
+
+function closeMarker() {
+	for(marker of markerArray) {
+		marker.setMap(null);
+	}
+}
